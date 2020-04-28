@@ -1,5 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useReducer } from 'react';
 import { v4 as uuidv4 } from 'uuid';
+
+import tasksReducer from '../reducer';
+import TYPES from '../actions/actionTypes';
 
 const TASK_STORAGE_KEY = 'TASK_STORAGE_KEY';
 
@@ -16,11 +19,12 @@ const getTasks = () => {
 }
 
 function Tasks() {
-    const { tasks: initialTasks, completedTasks: initialComleted } = getTasks();
+    const storedTasks = getTasks();
 
     const [taskText, setTaskText] = useState('');
-    const [tasks, setTasks] = useState(initialTasks);
-    const [completedTasks, setCompletedTasks] = useState(initialComleted);
+    const [state, dispatch] = useReducer(tasksReducer, storedTasks);
+
+    const { tasks, completedTasks } = state;
 
     useEffect(() => {
         storeTask({ tasks, completedTasks });
@@ -31,13 +35,18 @@ function Tasks() {
     };
 
     const addTask = () => {
-        setTasks([...tasks, { taskText, id: uuidv4() }]);
+        dispatch({
+            type: TYPES.ADD_TASK,
+            task: { taskText, id: uuidv4() }
+        });
     };
 
 
     const completeTask = (completedTask) => () => {
-        setCompletedTasks([...completedTasks, completedTask]);
-        setTasks(tasks.filter(task => task.id !== completedTask.id));
+        dispatch({
+            type: TYPES.COMPLETE_TASK,
+            completedTask
+        });
     };
 
     const handleKeyPress = event => {
